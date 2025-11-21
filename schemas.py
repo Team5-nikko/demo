@@ -35,7 +35,23 @@ class FrameAnalysis:
     caption: str
     tags: List[str] = field(default_factory=list)
     scores: Dict[str, float] = field(default_factory=dict)
-    extra: Dict[str, Any] = field(default_factory=dict)  # 必要に応じて拡張
+
+    # ここから追加
+    has_child: bool = False          # 子どもが写っているか
+    num_children: int = 0            # 推定人数
+    main_subject: str = ""           # "boy" / "girl" / "teacher" など
+
+    # バウンディングボックス（画像サイズで正規化0〜1）
+    bbox: Optional[List[float]] = None   # [x_min, y_min, x_max, y_max]
+
+    # 10×10グリッド上の位置
+    grid_row: Optional[int] = None       # 0〜9
+    grid_col: Optional[int] = None       # 0〜9
+    grid_label: Optional[str] = None     # "A7" のような表記
+
+    flags: Dict[str, bool] = field(default_factory=dict)
+
+    extra: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
