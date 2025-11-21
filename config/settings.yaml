@@ -1,10 +1,10 @@
 data_root: "outputs"
 
-frame_interval_sec: 1.0     # 何秒ごとにフレームを切り出すか
+frame_interval_sec: 2.0     # 何秒ごとにフレームを切り出すか
 max_bestshots: 5            # ベストショットとして選ぶ最大枚数
 
 diary:
-  max_chars: 500            # 日記テキストの最大文字数
+  max_chars: 1000            # 日記テキストの最大文字数
   language: "ja"            # "ja" or "en" など
 
 logging:
