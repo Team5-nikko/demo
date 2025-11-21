@@ -5,3 +5,5 @@ numpy
 matplotlib
 google-genai
 pyyaml
+sambanova
+requests

@@ -4,6 +4,7 @@ Markdown ファイルとして保存するモジュール。
 
 backend:
   - gemini: Gemini Text モデルで日記生成
+  - sambanova: SambaNova (Llama) Text モデルで日記生成
   - dummy : caption 群から簡易な日記文を組み立てる
 """
 
@@ -46,6 +47,33 @@ def _call_text_model_gemini(model_info, prompt: str) -> str:
         contents=prompt,
     )
     text = resp.text or ""
+    # 文字数制限に合わせて切り詰め
+    max_chars = SETTINGS.diary_max_chars
+    if len(text) > max_chars:
+        text = text[: max_chars - 3] + "..."
+    return text.strip()
+
+
+def _call_text_model_sambanova(model_info, prompt: str) -> str:
+    """
+    SambaNova API (Llama) Text モデルを呼び出して日記テキストを生成する。
+    """
+    client = model_info["client"]
+    model_name = model_info["model_name"]
+
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}],
+            }
+        ],
+        temperature=0.2,
+        top_p=0.9,
+    )
+
+    text = response.choices[0].message.content or ""
     # 文字数制限に合わせて切り詰め
     max_chars = SETTINGS.diary_max_chars
     if len(text) > max_chars:
@@ -106,6 +134,8 @@ def generate_diary(video_id: str) -> str:
 
     if backend == "gemini":
         diary_text = _call_text_model_gemini(model_info, prompt)
+    elif backend == "sambanova":
+        diary_text = _call_text_model_sambanova(model_info, prompt)
     else:
         diary_text = _call_text_model_dummy(prompt)
 

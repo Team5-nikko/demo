@@ -4,11 +4,13 @@ FrameAnalysis の JSONL を出力するモジュール。
 
 backend:
   - gemini: Gemini Vision (画像 + テキスト)
+  - sambanova: SambaNova (Llama) Vision (画像 + テキスト)
   - dummy : 画像ファイル名ベースのダミー
 """
 
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 from typing import List
@@ -80,6 +82,71 @@ def _call_vision_model_gemini(model_info, image_path: str, prompt: str) -> dict:
     return result
 
 
+def _call_vision_model_sambanova(model_info, image_path: str, prompt: str) -> dict:
+    """
+    SambaNova API (Llama) を使って画像1枚を解析し、JSONレスポンスを返す。
+
+    model_info: model_loader.load_model_for_role("vision_caption") の戻り値
+    image_path: 画像ファイルパス
+    prompt    : 画像と一緒に渡すプロンプト（JSON で返してと指示する）
+    """
+    client = model_info["client"]
+    model_name = model_info["model_name"]
+
+    # 画像を読み込んでbase64エンコード
+    with open(image_path, "rb") as f:
+        image_bytes = f.read()
+
+    # 画像形式を判定（PNG or JPEG）
+    img = Image.open(image_path)
+    if img.format == "PNG":
+        mime_type = "image/png"
+    else:
+        mime_type = "image/jpeg"
+
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    data_url = f"data:{mime_type};base64,{image_b64}"
+
+    # SambaNova API: 画像 + テキストでコンテンツ生成
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
+        temperature=0.2,
+        top_p=0.9,
+    )
+
+    text = response.choices[0].message.content or ""
+
+    # モデルには「必ず JSON オブジェクトだけ出して」と頼んでいる前提で、
+    # ここでは json.loads を試みる。失敗したら簡易フォールバック。
+    try:
+        result = json.loads(text)
+        if not isinstance(result, dict):
+            raise ValueError("JSON is not an object")
+    except Exception:
+        # フォールバック：全部 caption に突っ込む
+        result = {
+            "caption": text.strip(),
+            "tags": ["sambanova", "llama", "fallback"],
+            "scores": {"cuteness": 0.5, "interesting": 0.5, "representative": 0.5},
+        }
+
+    # 最低限のキーは保証しておく
+    result.setdefault("caption", "")
+    result.setdefault("tags", [])
+    result.setdefault("scores", {})
+
+    return result
+
+
 def _call_vision_model_dummy(image_path: str) -> dict:
     """
     LLM を使わないダミー実装。
@@ -120,6 +187,8 @@ def run_captioning(video_id: str) -> List[FrameAnalysis]:
     for fm in frames:
         if backend == "gemini":
             result = _call_vision_model_gemini(model_info, fm.frame_path, base_prompt)
+        elif backend == "sambanova":
+            result = _call_vision_model_sambanova(model_info, fm.frame_path, base_prompt)
         else:
             result = _call_vision_model_dummy(fm.frame_path)
 

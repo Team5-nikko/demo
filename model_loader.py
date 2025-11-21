@@ -2,6 +2,7 @@
 役割ごとに「どのバックエンドを使うか」を吸収するモジュール。
 
 - backend: "gemini" -> Gemini API (google-genai)
+- backend: "sambanova" -> SambaNova API (Llama)
 - backend: "local"  -> 将来のローカル Llama 用（今は TODO）
 - backend: "dummy"  -> ダミー実装（LLM無し）
 
@@ -22,7 +23,7 @@ importlib.reload(config_loader)
 importlib.reload(secrets_helper)
 
 from config_loader import MODEL_SETTINGS
-from secrets_helper import init_gemini_api_key
+from secrets_helper import init_gemini_api_key, init_sambanova_api_key
 
 # Gemini SDK
 try:
@@ -30,9 +31,16 @@ try:
 except ImportError:
     genai = None  # 後でエラーメッセージに使う
 
+# SambaNova SDK
+try:
+    from sambanova import SambaNova  # pip install sambanova
+except ImportError:
+    SambaNova = None  # 後でエラーメッセージに使う
+
 
 _MODEL_CACHE: Dict[str, Any] = {}
 _GEMINI_CLIENT: Any = None
+_SAMBANOVA_CLIENT: Any = None
 
 
 def get_model_config(role: str) -> Dict[str, Any]:
@@ -70,6 +78,29 @@ def _get_gemini_client() -> Any:
     return _GEMINI_CLIENT
 
 
+def _get_sambanova_client() -> Any:
+    global _SAMBANOVA_CLIENT
+
+    if _SAMBANOVA_CLIENT is not None:
+        return _SAMBANOVA_CLIENT
+
+    # ここで Colab / Cloud Run / ローカルのいずれかから SAMBANOVA_API_KEY を初期化
+    init_sambanova_api_key()
+
+    if SambaNova is None:
+        raise ImportError("sambanova がインストールされていません。pip install sambanova を実行してください。")
+
+    api_key = os.environ.get("SAMBANOVA_API_KEY")
+    if not api_key:
+        raise RuntimeError("SAMBANOVA_API_KEY が設定されていません。")
+
+    _SAMBANOVA_CLIENT = SambaNova(
+        api_key=api_key,
+        base_url="https://api.sambanova.ai/v1",
+    )
+    return _SAMBANOVA_CLIENT
+
+
 def load_model_for_role(role: str) -> Dict[str, Any]:
     """
     役割ごとの「モデル情報」を返す。
@@ -89,6 +120,19 @@ def load_model_for_role(role: str) -> Dict[str, Any]:
         client = _get_gemini_client()
         model = {
             "backend": "gemini",
+            "client": client,
+            "model_name": model_name,
+            "role": role,
+            "config": cfg,
+        }
+
+    elif backend == "sambanova":
+        client = _get_sambanova_client()
+        # モデル名が指定されていない場合はデフォルトを使用
+        if not model_name:
+            model_name = "Llama-4-Maverick-17B-128E-Instruct"
+        model = {
+            "backend": "sambanova",
             "client": client,
             "model_name": model_name,
             "role": role,

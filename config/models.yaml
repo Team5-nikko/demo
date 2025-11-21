@@ -1,12 +1,18 @@
 vision_caption:
-  backend: "gemini"                # "gemini" / "local" / "dummy"
-  model_name: "gemini-2.5-flash-lite"   # 画像にも強い軽量モデル
+  backend: "sambanova"                # "gemini" / "sambanova" / "local" / "dummy"
+  model_name: "Llama-4-Maverick-17B-128E-Instruct"   # SambaNova (Llama) モデル
   type: "vision"
+  # Gemini を使う場合の例:
+  # backend: "gemini"
+  # model_name: "gemini-2.5-flash-lite"
 
 diary_writer:
-  backend: "gemini"
-  model_name: "gemini-2.5-flash-lite"     # 少し賢いテキストモデル
+  backend: "sambanova"
+  model_name: "Llama-4-Maverick-17B-128E-Instruct"     # SambaNova (Llama) モデル
   type: "text"
+  # Gemini を使う場合の例:
+  # backend: "gemini"
+  # model_name: "gemini-2.5-flash-lite"
 
 scorer:
   backend: "dummy"                 # とりあえずダミーのまま
