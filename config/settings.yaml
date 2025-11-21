@@ -1,6 +1,6 @@
 data_root: "outputs"
 
-frame_interval_sec: 5.0     # 何秒ごとにフレームを切り出すか
+frame_interval_sec: 2.0     # 何秒ごとにフレームを切り出すか
 max_bestshots: 5            # ベストショットとして選ぶ最大枚数
 
 diary:
