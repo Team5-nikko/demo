@@ -1,0 +1,14 @@
+vision_caption:
+  backend: "gemini"                # "gemini" / "local" / "dummy"
+  model_name: "gemini-2.5-flash-lite"   # 画像にも強い軽量モデル
+  type: "vision"
+
+diary_writer:
+  backend: "gemini"
+  model_name: "gemini-2.5-flash-lite"     # 少し賢いテキストモデル
+  type: "text"
+
+scorer:
+  backend: "dummy"                 # とりあえずダミーのまま
+  model_name: "dummy-scorer"
+  type: "text"

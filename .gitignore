@@ -1,0 +1,25 @@
+# すでにある内容 + これを追記するイメージ
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+
+# ログ
+streamlit.log
+
+# シークレット類（ここを重要視）
+colab_secrets.py
+*.secret.json
+*.env
+.env
+.env.local
+.streamlit/
+
+# 実行結果
+outputs/
+data/
+
+# Colab / Jupyter
+.ipynb_checkpoints/
+*.ipynb
