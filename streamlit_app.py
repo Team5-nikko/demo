@@ -186,7 +186,7 @@ def main():
             diary_path = get_diary_path(video_id)
             if diary_path.exists():
                 diary_text = diary_path.read_text(encoding="utf-8")
-                st.markdown(diary_text)
+                st.text_area("日記", diary_text, height=300)
             else:
                 st.write("日記ファイルが見つかりませんでした。")
 
