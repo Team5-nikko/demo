@@ -162,7 +162,6 @@ def _build_flags(
     flags["center_position"] = grid_label in center_cells if grid_label else False
     return flags
 
-
 def run_captioning(video_id: str) -> List[FrameAnalysis]:
     """
     1. manifests/{video_id}_frames_manifest.jsonl を読む
@@ -258,3 +257,4 @@ def run_captioning(video_id: str) -> List[FrameAnalysis]:
     out_path = get_analysis_path(video_id)
     write_jsonl(out_path, analyses)
     return analyses
+
